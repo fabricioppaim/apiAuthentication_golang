@@ -1,6 +1,8 @@
 package seguranca
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
+)
 
 // Hash recebe uma string e coloca um hash nela
 func Hash(senha string) ([]byte, error) {
