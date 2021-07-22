@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,14 +32,15 @@ func ValidarToken(r *http.Request) error {
 
 	token, erro := jwt.Parse(tokenString, retornarChaveDeVerificacao)
 	if erro != nil {
-		return erro
+		erroCustom := fmt.Errorf("token invalid: %v", erro)
+		return erroCustom
 	}
 
 	if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return nil
 	}
 
-	return errors.New("token invalido")
+	return errors.New("token inválido")
 }
 
 // extrairToken verifica se o token está no formato válido e extrai ele do header
@@ -63,4 +65,26 @@ func retornarChaveDeVerificacao(token *jwt.Token) (interface{}, error) {
 	}
 
 	return config.Secretkey, nil
+}
+
+func ExtrairUsuarioID(r *http.Request) (uint64, error) {
+
+	tokenString := extrairToken(r)
+
+	token, erro := jwt.Parse(tokenString, retornarChaveDeVerificacao)
+	if erro != nil {
+		return 0, erro
+	}
+
+	if permissoes, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		usuarioID, erro := strconv.ParseUint(fmt.Sprintf("%.0f", permissoes["usuarioId"]), 10, 64) // A conversão do permissoes["usuarioID"] deve ser feita de float para strgin, assim o parse unint consegue resolver.
+		if erro != nil {
+			return 0, erro
+		}
+
+		return usuarioID, nil
+	}
+
+	return 0, errors.New("token inválido")
+
 }
